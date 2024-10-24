@@ -1,0 +1,27 @@
+F(x)=y	GOAL: estimate function F using ARIMA, LR, deep RNN, LSTM		
+y = PRC	Average of close of business bid and ask of each SPY, and 10 sector ETFs		
+x = BIDLO, ASKHI, VOL of each asset (SPY and 10 sector ETFs) + Treasury rates			
+			
+1. Yoshi: Data-> train, validate, test			
+2. Zimo, Xu Yiting: train your model on the training dataset, choose hyperparameters on validation dataset			
+	Zimo: ARIMA and LR		
+	Xu: RNN & RNN-DO		
+	Yiting: RNN dense and LSTM		
+3. Evaristo: test each tuned model on the test dataset, and compare			
+Deadlines:			
+22nd October: one page description of the project -> Overleaf			
+	Dataset: WRDS dataset to download historical data on SPY, 10 sector ETFs		
+	Goal: predict next COB price of SPY and 10 sector ETFs, given previous 100 days data on SPY and 10 Sector ETFs		
+	Description of each method and why we think is good		
+		LR is the standard method and we use as a benchmark (i.e. a method is considered good if it does better than LR)	
+		We try ARIMA because it is typical for data with some ciclycality	
+		Recurrent NN are also typical for cyclical data	
+			Different ways to overcome technical issues in training RNN
+			And so, we try different methods 
+			
+1 November: description of planned modelling approach based on data analysis for the last two weeks			
+	Perhaps just mention which models are working		
+			
+8 November: Give an update on what we have achieved so far			
+			
+2 December: project due date			
