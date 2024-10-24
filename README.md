@@ -1,4 +1,4 @@
-# AI based stock market predictions
+# Project summary
 
 - The aim of this project is to test the capability of different machine learning methods in predicting the close of business (COB) mid prices
 
