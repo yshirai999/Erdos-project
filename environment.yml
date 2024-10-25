@@ -6,6 +6,7 @@ dependencies:
   - matplotlib >= 3.8
   - openpyxl >= 3.0
   - pandas >= 2.0
+  - pandas-datareader
   - pip >= 24.0
   - pyarrow 
   - py-xgboost
