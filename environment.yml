@@ -15,6 +15,7 @@ dependencies:
   - sqlalchemy
   - xgboost >= 2.0.3
   - pmdarima >= 2.0
+  - tensorflow
   - pip:
       - cinemagoer
       - lxml
