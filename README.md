@@ -24,3 +24,8 @@ $$\begin{align*} St = (S^1_t , ..., S^d_t )\end{align*}$$
 - Hyperparameter tuning will be performed for each model on the validation set.
 - Root mean square error in predictions will be estimated on the testing set for each model.
 - The final goal is to understand which model achieves minimal RMSE on the validation test, which will be reported in our delivery.
+
+## Installation
+
+- Download the repo locally
+- To install the conda environment, run in the terminal `conda env create --name AI_Predictions --file=environment.yml`
