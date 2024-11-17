@@ -5,7 +5,7 @@
 
 $$\begin{align*} S_t = (S^1_t , ..., S^d_t )\end{align*}$$
 
-of $d$ stocks, given the previous n days of COB prices $S_{t−n}, ..., S_{t−1}$ and other variables, including Treasury rates.
+  of $d$ stocks, given the previous n days of COB prices $S_{t−n}, ..., S_{t−1}$ and other variables, including Treasury rates.
 
 ## Source of data
 
