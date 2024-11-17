@@ -3,9 +3,9 @@
 - This simple project was performed as part of the Data Science bootcamp of the Erdos Institute Fall 2024 program
 - The aim of this project is to test the capability of different machine learning methods in predicting the close of business (COB) mid prices
 
-$$\begin{align*} St = (S^1_t , ..., S^d_t )\end{align*}$$
+$$\begin{align*} S_t = (S^1_t , ..., S^d_t )\end{align*}$$
 
-- of $d$ stocks, given the previous n days of COB prices $S_{t−n}, ..., S_{t−1}$ and other variables, including Treasury rates.
+of $d$ stocks, given the previous n days of COB prices $S_{t−n}, ..., S_{t−1}$ and other variables, including Treasury rates.
 
 ## Source of data
 
