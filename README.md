@@ -1,7 +1,7 @@
 # Project summary
 
 - This simple project was performed as part of the Data Science bootcamp of the Erdos Institute Fall 2024 program.
-- The aim of this project is to test the capability of different machine learning methods in predicting the close of business (COB) mid prices.
+- The aim of this project is to test the capability of different machine learning methods in predicting the close of business (COB) mid prices
 
 $$\begin{align*} S_t = (S^1_t , ..., S^d_t )\end{align*}$$
 
