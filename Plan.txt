@@ -6,8 +6,7 @@ x = BIDLO, ASKHI, VOL of each asset (SPY and 10 sector ETFs) + Treasury rates
 2. Zimo, Xu Yiting: train your model on the training dataset, choose hyperparameters on validation dataset			
 	Zimo: ARIMA and LR		
 	Xu: RNN & RNN-DO		
-	Yiting: RNN dense and LSTM		
-3. Evaristo: test each tuned model on the test dataset, and compare			
+	Yiting: RNN dense and LSTM					
 Deadlines:			
 22nd October: one page description of the project -> Overleaf			
 	Dataset: WRDS dataset to download historical data on SPY, 10 sector ETFs		
