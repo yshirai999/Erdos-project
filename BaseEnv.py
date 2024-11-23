@@ -6,7 +6,7 @@ import pandas as pd
 import datetime as dt
 
 
-class BaseClass():
+class BaseClass:
 
     def __init__(self,
     feature_steps: int = 10,
@@ -33,7 +33,8 @@ class BaseClass():
         self.split_ind_2 = {}
         self.prc = {}
         for name, data in self.tickers:
-            self.prc[name] = data[['PRC']].diff().dropna()
+            self.prc[name] = data['PRC'].iloc[0]
+            data = data[['PRC']].diff().dropna()
             self.ts[name] = data.values#.flatten()
             self.X[name], self.y[name] = self.ts_split(self.ts[name])
             self.split_ind[name] = int(self.X[name].shape[0]*0.8)
