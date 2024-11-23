@@ -33,7 +33,7 @@ class BaseClass:
         self.split_ind_2 = {}
         self.prc = {}
         for name, data in self.tickers:
-            self.prc[name] = data['PRC'].iloc[0]
+            self.prc[name] = data['PRC'].values
             data = data[['PRC']].diff().dropna()
             self.ts[name] = data.values#.flatten()
             self.X[name], self.y[name] = self.ts_split(self.ts[name])
