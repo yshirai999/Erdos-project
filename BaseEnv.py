@@ -37,7 +37,7 @@ class BaseClass():
             self.ts[name] = data.values#.flatten()
             self.X[name], self.y[name] = self.ts_split(self.ts[name])
             self.split_ind[name] = int(self.X[name].shape[0]*0.8)
-            self.X_train_full[name], self.y_train_full[name] = self.X[name][:self.split_ind[name]], y[name][:self.split_ind[name]]
+            self.X_train_full[name], self.y_train_full[name] = self.X[name][:self.split_ind[name]], self.y[name][:self.split_ind[name]]
             self.X_test[name], self.y_test[name] = self.X[name][self.split_ind[name]:], self.y[name][self.split_ind[name]:]
             self.split_ind_2[name] = int(self.X_train_full[name].shape[0]*0.8)
             self.X_train[name], self.y_train[name] = self.X_train_full[name][:self.split_ind_2[name]], self.y_train_full[name][:self.split_ind_2[name]]
