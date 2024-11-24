@@ -77,7 +77,8 @@ class RegressionClass(BaseClass):
 
     def Visualization(self,
         model,
-        plot: bool = False
+        plot: bool = False,
+        logdiff: bool = True
     ):
         if model not in [LinearRegression,ARIMA]:
             raise TypeError("model must be a LinearRegression or ARIMA model")
@@ -85,8 +86,12 @@ class RegressionClass(BaseClass):
             if plot:
                 for name in self.tickers.groups.keys():
                     plt.figure(figsize=(10, 5))
-                    plt.plot(self.test_dates[name][model], self.y_test[name], label="Actual")
-                    plt.plot(self.test_dates[name][model], self.test_pred[name][model], label="Predicted")
+                    if logdiff:
+                        plt.plot(self.test_dates[name][model], self.y_test[name], label="Actual")
+                        plt.plot(self.test_dates[name][model], self.test_pred[name][model], label="Predicted")
+                    else:
+                        plt.plot(self.test_dates[name][model], self.y_test_prc[name][model], label="Actual")
+                        plt.plot(self.test_dates[name][model], self.y_pred_prc[name][model], label="Predicted")
                     plt.title(f"{self.models_name_str[model]}: Predicted vs Actual log difference on test dataset for {name}")
                     plt.xlabel("Time Steps")
                     plt.ylabel("Price")
