@@ -56,12 +56,6 @@ class RegressionClass(BaseClass):
                 self.valid_pred[name][model] = m.predict(self.X_valid[name])
                 self.test_pred[name][model] = m.predict(self.X_test[name])
             elif model == ARIMA:
-                # m = ARIMA(self.train_series[name][:n_train], order = self.order).fit()
-                # self.train_pred[name][model] = m.predict(start = 0, end = n_train-1)
-                # pred = m.predict(start = n_train, end = n_train+n_valid+n_test-1)
-                # self.valid_pred[name][model] = pred[n_train:n_train+n_valid]
-                # self.test_pred[name][model] = pred[n_train+n_valid:n_train+n_valid+n_test]
-
                 m = ARIMA(self.train_series[name][:n_train], order = self.order).fit()
                 self.train_pred[name][model] = m.predict(start = 0, end = n_train-1)
                 pred = []
