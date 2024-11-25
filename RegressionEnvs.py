@@ -19,6 +19,7 @@ class RegressionClass(BaseClass):
         self.train_pred = {}
         self.valid_pred = {}
         self.test_pred = {}
+        self.test_pred_rescaled = {}
         self.train_errors = {}
         self.valid_errors = {}
         self.test_errors = {}
@@ -31,6 +32,7 @@ class RegressionClass(BaseClass):
             self.train_pred[name] = {LinearRegression: [], ARIMA: []}
             self.valid_pred[name] = {LinearRegression: [], ARIMA: []}
             self.test_pred[name] = {LinearRegression: [], ARIMA: []}
+            self.test_pred_rescaled = {LinearRegression: [], ARIMA: []}
             self.train_errors[name] = {LinearRegression: [], ARIMA: []}
             self.valid_errors[name] = {LinearRegression: [], ARIMA: []}
             self.test_errors[name] = {LinearRegression: [], ARIMA: []}
@@ -61,44 +63,35 @@ class RegressionClass(BaseClass):
                 pred = []
                 for t in range(n_train,n_train+n_valid+n_test):
                     m = m.extend(self.train_series[name][t])
-                    pred.append(m.forecast(1))
+                    pred.append(m.forecast(1)[0])
+                pred = np.array(pred)
                 self.valid_pred[name][model] = pred[:n_valid]
                 self.test_pred[name][model] = pred[n_valid:]
             else:
                 raise TypeError("model must be a LinearRegression or ARIMA model")
 
+            self.test_pred[name][model] = self.test_pred[name][model][...,np.newaxis]
             self.train_errors[name][model] = mean_squared_error(self.y_train[name], self.train_pred[name][model])
             self.valid_errors[name][model] = mean_squared_error(self.y_valid[name], self.valid_pred[name][model])
             self.test_errors[name][model] = mean_squared_error(self.y_test[name], self.test_pred[name][model])
 
-            self.y_pred_prc[name][model] = [np.exp(self.test_pred[name][model][i])*self.prc[name][-n_test:][i] for i in range(n_test)]
-            self.y_test_prc[name][model] = self.prc[name][-n_test:]
-            self.test_dates[name][model] = self.dates[-n_test:]
+            self.y_predict_rescaled(model,name,n_test)
 
-    def Visualization(self,
+            # y_pred_prc = [np.exp(self.test_pred[name][model][i])*self.prc[name][-n_test:][i] for i in range(n_test)]
+            # y_test_prc = self.prc[name][-n_test:]
+
+            # self.y_test_prc = self.scalers[name].inverse_transform(y_test_prc)
+            # self.y_pred_prc = self.scalers[name].inverse_transform(y_pred_prc)
+
+            self.test_dates[name][model] = self.dates[-n_test:]
+    
+    def VisualizationRegression(self,
         model,
         plot: bool = False,
         logdiff: bool = True
     ):
         if model not in [LinearRegression,ARIMA]:
-            raise TypeError("model must be a LinearRegression or ARIMA model")
+            raise TypeError("model must be SimpleRNN or LSTM")
         else:
-            if plot:
-                for name in self.tickers.groups.keys():
-                    plt.figure(figsize=(10, 5))
-                    if logdiff:
-                        plt.plot(self.test_dates[name][model], self.y_test[name], label="Actual")
-                        plt.plot(self.test_dates[name][model], self.test_pred[name][model], label="Predicted")
-                    else:
-                        plt.plot(self.test_dates[name][model], self.y_test_prc[name][model], label="Actual")
-                        plt.plot(self.test_dates[name][model], self.y_pred_prc[name][model], label="Predicted")
-                    plt.title(f"{self.models_name_str[model]}: Predicted vs Actual log difference on test dataset for {name}")
-                    plt.xlabel("Time Steps")
-                    plt.ylabel("Price")
-                    plt.legend()
-                    plt.show()
-
-            print(f"{self.models_name_str[model]}: mean Squared Error for each ticker:")
-            for name in self.tickers.groups.keys():
-                print(f"{name}: Train MSE = {self.train_errors[name][model]:.4f}, Valid MSE = {self.valid_errors[name][model]:.4f}, Test MSE = {self.test_errors[name][model]:.4f}")
+            self.Visualization(model=model,plot=plot,logdiff=logdiff)
 

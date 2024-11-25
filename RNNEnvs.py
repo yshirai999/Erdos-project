@@ -1,6 +1,7 @@
 from BaseEnv import BaseClass
 import tensorflow as tf
-from tensorflow.keras.layers import SimpleRNN, LSTM
+from tensorflow.keras.layers import SimpleRNN, LSTM, Dense, Dropout, TimeDistributed
+from tensorflow.keras.models import Sequential
 import pandas as pd
 from sklearn.metrics import mean_squared_error
 import numpy as np
@@ -17,10 +18,13 @@ class RNNClass(BaseClass):
         dropout: bool = False
     ):  
         super().__init__(feature_steps = feature_steps, target_steps = target_steps)
+        self.models_function_name = {SimpleRNN: self.rnn_dense_model, LSTM: self.lstm_model}
+        self.models_name_str = {SimpleRNN: "SimpleRNN", LSTM: "LSTM"}
         self.train_series = {}
         self.train_pred = {}
         self.valid_pred = {}
         self.test_pred = {}
+        self.test_pred_rescaled = {}
         self.train_errors = {}
         self.valid_errors = {}
         self.test_errors = {}
@@ -33,6 +37,7 @@ class RNNClass(BaseClass):
             self.train_pred[name] = {SimpleRNN: [], LSTM: []}
             self.valid_pred[name] = {SimpleRNN: [], LSTM: []}
             self.test_pred[name] = {SimpleRNN: [], LSTM: []}
+            self.test_pred_rescaled[name] = {SimpleRNN: [], LSTM: []}
             self.train_errors[name] = {SimpleRNN: [], LSTM: []}
             self.valid_errors[name] = {SimpleRNN: [], LSTM: []}
             self.test_errors[name] = {SimpleRNN: [], LSTM: []}
@@ -50,23 +55,28 @@ class RNNClass(BaseClass):
             n_valid = len(self.X_valid[name])
             n_test = len(self.X_test[name])
 
+            input_shape = (self.X_train[name].shape[1], 1)
+            output_units = self.y_train[name].shape[1] if len(self.y_train[name].shape) > 1 else 1
+
             if model in [SimpleRNN, LSTM]:
 
-                m = tf.keras.models.Sequential([
-                     model(20, return_sequences=True,
-                                            dropout=0.1, recurrent_dropout=0.1,
-                                            input_shape=[None, 1]),
-                     model(20, return_sequences=True,
-                                           dropout=0.1, recurrent_dropout=0.1),
-                     tf.keras.layers.BatchNormalization(),
-                     tf.keras.layers.TimeDistributed(tf.keras.layers.Dense(1)),
-                     tf.keras.layers.Lambda(lambda Y_pred: Y_pred[:, -12:])
-                 ])
+                # m = tf.keras.models.Sequential([
+                #      model(64, return_sequences=True,
+                #                             dropout=0.1, recurrent_dropout=0.1,
+                #                             input_shape=[None, 1]),
+                #      model(64, return_sequences=True,
+                #                            dropout=0.1, recurrent_dropout=0.1),
+                #      tf.keras.layers.BatchNormalization(),
+                #      tf.keras.layers.TimeDistributed(tf.keras.layers.Dense(1)),
+                #      tf.keras.layers.Lambda(lambda Y_pred: Y_pred[:, -1:])
+                #  ])
+                m = self.models_function_name[model](input_shape=input_shape, output_units=output_units)
 
                 m.compile(loss="mse", optimizer="nadam")
             else:
                 raise TypeError("model must be SimpleRNN or LSTM")
             
+
             early_stopping_cb = tf.keras.callbacks.EarlyStopping(patience=200,
                                                               min_delta=0.01,
                                                               restore_best_weights=True)
@@ -74,19 +84,60 @@ class RNNClass(BaseClass):
                         validation_data=(self.X_valid[name][..., np.newaxis], self.y_valid[name][..., np.newaxis]),
                         callbacks=[early_stopping_cb], verbose=0)
             
-            pd.DataFrame(run.history).iloc[-11:]
+            #pd.DataFrame(run.history).iloc[-11:]
 
             self.train_pred[name][model] = m.predict(self.X_train[name])
             self.valid_pred[name][model] = m.predict(self.X_valid[name])
             self.test_pred[name][model] = m.predict(self.X_test[name])
 
+            # self.train_pred[name][model] = train_pred[:, -1, 0].flatten()  
+            # self.valid_pred[name][model] = valid_pred[:, -1, 0].flatten()
+            # self.test_pred[name][model] = test_pred[:, -1, 0].flatten()
+
             self.train_errors[name][model] = mean_squared_error(self.y_train[name], self.train_pred[name][model])
             self.valid_errors[name][model] = mean_squared_error(self.y_valid[name], self.valid_pred[name][model])
             self.test_errors[name][model] = mean_squared_error(self.y_test[name], self.test_pred[name][model])
 
-            self.y_pred_prc[name][model] = [np.exp(self.test_pred[name][model][i])*self.prc[name][-n_test:][i] for i in range(n_test)]
-            self.y_test_prc[name][model] = self.prc[name][-n_test:]
+            self.y_predict_rescaled(model,name,n_test)
             self.test_dates[name][model] = self.dates[-n_test:]
+
+    def rnn_dense_model(self,
+        input_shape,
+        output_units
+    ):
+        model = Sequential()
+        
+        model.add(SimpleRNN(units=64, activation='relu', input_shape=input_shape, return_sequences=True))
+        model.add(Dropout(0.2))
+        
+        model.add(TimeDistributed(Dense(units=32, activation='relu')))
+        
+        model.add(SimpleRNN(units=64, activation='relu', return_sequences=False))
+        model.add(Dropout(0.2))
+        
+        model.add(Dense(units=64, activation='relu'))
+        model.add(Dense(units=32, activation='relu'))
+        
+        model.add(Dense(units=output_units))
+        return model
+
+    def lstm_model(self,
+        input_shape,
+        output_units
+    ):
+        model = Sequential()
+        
+        model.add(LSTM(units=64, input_shape=input_shape, return_sequences=True))
+        model.add(Dropout(0.2))
+        
+        model.add(LSTM(units=64, return_sequences=True))
+        model.add(Dropout(0.2))
+        
+        model.add(LSTM(units=64, return_sequences=False))
+        
+        model.add(Dense(units=output_units))
+        
+        return model
 
     def reset_session(self,
             seed=42
@@ -95,24 +146,12 @@ class RNNClass(BaseClass):
             np.random.seed(seed)
             tf.keras.backend.clear_session()
 
-    def Visualization(self,
+    def VisualizationRNN(self,
         model,
-        plot: bool = False
+        plot: bool = False,
+        logdiff: bool = True
     ):
         if model not in [SimpleRNN,LSTM]:
             raise TypeError("model must be SimpleRNN or LSTM")
         else:
-            if plot:
-                for name in self.tickers.groups.keys():
-                    plt.figure(figsize=(10, 5))
-                    plt.plot(self.test_dates[name][model], self.y_test[name], label="Actual")
-                    plt.plot(self.test_dates[name][model], self.test_pred[name][model], label="Predicted")
-                    plt.title(f"{self.models_name_str[model]}: Predicted vs Actual log difference on test dataset for {name}")
-                    plt.xlabel("Time Steps")
-                    plt.ylabel("Price")
-                    plt.legend()
-                    plt.show()
-
-            print(f"{self.models_name_str[model]}: mean Squared Error for each ticker:")
-            for name in self.tickers.groups.keys():
-                print(f"{name}: Train MSE = {self.train_errors[name][model]:.4f}, Valid MSE = {self.valid_errors[name][model]:.4f}, Test MSE = {self.test_errors[name][model]:.4f}")
+            self.Visualization(model=model,plot=plot,logdiff=logdiff)
