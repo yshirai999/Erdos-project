@@ -1,6 +1,7 @@
 from BaseEnv import BaseClass
 from sklearn.linear_model import LinearRegression
 from statsmodels.tsa.arima.model import ARIMA
+from arch import arch_model as GARCH
 from sklearn.metrics import mean_squared_error
 import numpy as np
 import matplotlib.pyplot as plt
@@ -13,8 +14,9 @@ class RegressionClass(BaseClass):
         order: tuple[int] = (10,0,1)
     ):  
         super().__init__(feature_steps = feature_steps, target_steps = target_steps)
+        self.models = {}
         self.order = order
-        self.models_name_str = {LinearRegression: "Linear Regression", ARIMA: "ARIMA"}
+        self.models_name_str = {LinearRegression: "Linear Regression", ARIMA: "ARIMA", GARCH: "GARCH"}
         self.train_series = {}
         self.train_pred = {}
         self.valid_pred = {}
@@ -28,6 +30,7 @@ class RegressionClass(BaseClass):
         self.restored_prices = {}
         self.test_dates = {}
         for name in self.tickers.groups.keys():
+            self.models[name] = {}
             self.train_series[name] = np.concatenate( (self.y_train[name],self.y_valid[name],self.y_test[name]), axis=0)
             self.train_pred[name] = {LinearRegression: [], ARIMA: []}
             self.valid_pred[name] = {LinearRegression: [], ARIMA: []}
@@ -68,22 +71,19 @@ class RegressionClass(BaseClass):
                 self.valid_pred[name][model] = pred[:n_valid]
                 self.test_pred[name][model] = pred[n_valid:]
             else:
-                raise TypeError("model must be a LinearRegression or ARIMA model")
+                raise TypeError("model must be a LinearRegression, ARIMA or GARCH model")
 
             self.test_pred[name][model] = self.test_pred[name][model][...,np.newaxis]
+
             self.train_errors[name][model] = mean_squared_error(self.y_train[name], self.train_pred[name][model])
             self.valid_errors[name][model] = mean_squared_error(self.y_valid[name], self.valid_pred[name][model])
             self.test_errors[name][model] = mean_squared_error(self.y_test[name], self.test_pred[name][model])
 
             self.y_predict_rescaled(model,name,n_test)
 
-            # y_pred_prc = [np.exp(self.test_pred[name][model][i])*self.prc[name][-n_test:][i] for i in range(n_test)]
-            # y_test_prc = self.prc[name][-n_test:]
-
-            # self.y_test_prc = self.scalers[name].inverse_transform(y_test_prc)
-            # self.y_pred_prc = self.scalers[name].inverse_transform(y_pred_prc)
-
             self.test_dates[name][model] = self.dates[-n_test:]
+
+            self.models[name][model] = m
     
     def VisualizationRegression(self,
         model,

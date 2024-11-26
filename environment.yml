@@ -23,3 +23,4 @@ dependencies:
     - pyjokes==0.6.0
     - plotly==5.24.0
     - seaborn==0.13.2
+    - arch

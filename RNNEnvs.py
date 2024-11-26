@@ -7,6 +7,9 @@ from sklearn.metrics import mean_squared_error
 import numpy as np
 import matplotlib.pyplot as plt
 
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
 
 class RNNClass(BaseClass):
 
@@ -14,9 +17,13 @@ class RNNClass(BaseClass):
         feature_steps: int = 10,
         target_steps: int = 1,
         batchnormalization: bool = False,
+        layers_RNN: int = 2,
+        layers_LSTM: int = 2
     ):  
         super().__init__(feature_steps = feature_steps, target_steps = target_steps)
+        self.models = {}
         self.bn = batchnormalization
+        self.layers = {SimpleRNN: layers_RNN, LSTM: layers_LSTM}
         self.models_function_name = {SimpleRNN: self.rnn_dense_model, LSTM: self.lstm_model}
         self.models_name_str = {SimpleRNN: "SimpleRNN", LSTM: "LSTM"}
         self.train_series = {}
@@ -34,6 +41,7 @@ class RNNClass(BaseClass):
         self.history = {}
         for name in self.tickers.groups.keys():
             self.train_series[name] = np.concatenate( (self.y_train[name],self.y_valid[name],self.y_test[name]), axis=0)
+            self.models[name] = dict()
             self.train_pred[name] = {SimpleRNN: [], LSTM: []}
             self.valid_pred[name] = {SimpleRNN: [], LSTM: []}
             self.test_pred[name] = {SimpleRNN: [], LSTM: []}
@@ -60,7 +68,7 @@ class RNNClass(BaseClass):
             output_units = self.y_train[name].shape[1] if len(self.y_train[name].shape) > 1 else 1
 
             if model in [SimpleRNN, LSTM]:
-                m = self.models_function_name[model](input_shape=input_shape, output_units=output_units)
+                m = self.models_function_name[model](input_shape=input_shape, output_units=output_units, layers = self.layers[model])
                 m.compile(loss="mse", optimizer="nadam")
             else:
                 raise TypeError("model must be SimpleRNN or LSTM")
@@ -69,10 +77,11 @@ class RNNClass(BaseClass):
             early_stopping_cb = tf.keras.callbacks.EarlyStopping(patience=200,
                                                               min_delta=0.01,
                                                               restore_best_weights=True)
-            self.history[name][model] = m.fit(self.X_train[name][..., np.newaxis], self.y_train[name][..., np.newaxis], epochs=200,
+            
+            self.history[name][model] = m.fit(self.X_train[name][..., np.newaxis], self.y_train[name][..., np.newaxis], epochs=50,
                                               validation_data=(self.X_valid[name][..., np.newaxis], self.y_valid[name][..., np.newaxis]),
                                               callbacks=[early_stopping_cb], verbose=0)
-            
+
             #pd.DataFrame(run.history).iloc[-11:]
 
             self.train_pred[name][model] = m.predict(self.X_train[name])
@@ -86,13 +95,16 @@ class RNNClass(BaseClass):
             self.y_predict_rescaled(model,name,n_test)
             self.test_dates[name][model] = self.dates[-n_test:]
 
+            self.models[name][model] = m
+
     def rnn_dense_model(self,
         input_shape,
-        output_units
+        output_units,
+        layers
     ):
         model = Sequential()
         
-        for i in range(3):
+        for i in range(layers):
             model.add(SimpleRNN(units=64, activation='relu', input_shape=input_shape, return_sequences=True))
             model.add(Dropout(0.2))        
 
@@ -113,15 +125,14 @@ class RNNClass(BaseClass):
 
     def lstm_model(self,
         input_shape,
-        output_units
+        output_units,
+        layers
     ):
         model = Sequential()
-        
-        model.add(LSTM(units=64, input_shape=input_shape, return_sequences=True))
-        model.add(Dropout(0.2))
-        
-        model.add(LSTM(units=64, return_sequences=True))
-        model.add(Dropout(0.2))
+
+        for i in range(layers):
+            model.add(LSTM(units=64, input_shape=input_shape, return_sequences=True))
+            model.add(Dropout(0.2))
         
         model.add(LSTM(units=64, return_sequences=False))
         
