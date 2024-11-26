@@ -22,5 +22,14 @@ Deadlines:
 	Perhaps just mention which models are working		
 			
 8 November: Give an update on what we have achieved so far			
-			
-2 December: project due date			
+
+Slides: 
+- summary: what are we trying to do
+- Linear regression as a benchmark -> MSE
+- ARIMA -> one slide on what it is + one slide on result (same as LR on training dataset but worse on test and validate)
+- Simple RNN -> one slide on what it is + one slide on result (generally worse than LR)
+- LSTM -> one slide on what it is + one slide on result (better than LR) + one slide of explanation (signal plot)
+- Conclusion -> LSTM is better, but unable to capture volatility of log price changes -> maybe MSE not best measure
+
+2 December: project due date		
+
